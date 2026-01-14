@@ -95,6 +95,7 @@ class JSONBackup(commands.Cog):
         # Determine correct monthly log file
         month_file = datetime.now().strftime("%b_%Y").upper() + ".json"
         self.json_file = JSON_DIR / month_file
+        self.ensure_json_file_exists()
 
         self.notification_channel_id = self.cfg["channels"].get("backup_notifications")
 
@@ -136,6 +137,7 @@ class JSONBackup(commands.Cog):
 
     async def backup_json(self):
         try:
+            self.ensure_json_file_exists()
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             # Use a more descriptive backup filename based on the monthly JSON
             month_stem = self.json_file.stem  # e.g. DEC_2025
@@ -163,6 +165,15 @@ class JSONBackup(commands.Cog):
             print(f"[BACKUP ERROR] JSON file not found: {self.json_file}")
         except Exception as e:
             print(f"[BACKUP ERROR] {e}")
+
+    def ensure_json_file_exists(self):
+        if not self.json_file.exists():
+            with open(self.json_file, "w") as file:
+                json.dump({
+                    "records": {},
+                    "daily_totals": {},
+                    "weekly_totals": {}
+                }, file, indent=4)
 
     async def cleanup_old_backups(self):
         try:
