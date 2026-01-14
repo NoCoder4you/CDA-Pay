@@ -91,45 +91,20 @@ class PayTimeConfirmationView(discord.ui.View):
     @discord.ui.button(label="", style=discord.ButtonStyle.green, custom_id="time1")
     async def timebutton1(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.selected_time = self.time1
-        await self._send_persistent_embed(interaction, self.time1)
+        await self._confirm_selection(interaction, self.time1)
 
     @discord.ui.button(label="", style=discord.ButtonStyle.blurple, custom_id="time2")
     async def timebutton2(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.selected_time = self.time2
-        await self._send_persistent_embed(interaction, self.time2)
+        await self._confirm_selection(interaction, self.time2)
 
-    async def _send_persistent_embed(self, interaction: discord.Interaction, selected_time):
-        # Code remains unchanged
+    async def _confirm_selection(self, interaction: discord.Interaction, selected_time):
         self.record_data["pay_time"] = selected_time
-        embed = discord.Embed(
-            title=f"{self.record_data['pay_date']}",
-            color=discord.Color.blue(),
+        await interaction.response.edit_message(
+            content=f"{selected_time} selected. Recording pay now.",
+            view=None,
         )
-        embed.add_field(name="Pay Time", value=selected_time, inline=False)
-        embed.add_field(name="Total Claiming", value=f"{self.record_data['total_claiming']}", inline=False)
-        embed.add_field(name="People Paid", value=f"{self.record_data['people_paid']}", inline=False)
-        embed.add_field(name="People Denied", value=f"{self.record_data['people_denied']}", inline=False)
-        embed.add_field(
-            name="Total Paid",
-            value=f"{self.record_data['paytime_paid'] + self.record_data.get('bonus_paid', 0)}c",
-            inline=False,
-        )
-        embed.add_field(name="Record ID", value=f"{self.record_data['record_id']}", inline=False)
-        embed.set_footer(
-            text=f"Recorded by {self.interaction.user.name}", icon_url=interaction.user.display_avatar.url
-        )
-
-        # Send embed to channel
-        response_message = await self.interaction.channel.send(embed=embed)
-        self.record_data["message_id"] = response_message.id
-
-        # Save the updated record
-        self.save_data_callback()
-
-        # Notify user
-        await interaction.response.send_message(
-            f"{selected_time} has been successfully recorded.", ephemeral=True
-        )
+        self.stop()
     
     
     
@@ -753,4 +728,3 @@ class PayTracker(commands.Cog):
 
 async def setup(bot):
     await bot.add_cog(PayTracker(bot))
-
